@@ -3,13 +3,18 @@ let mapleader = ','
 
 " === Plugins ===
 call plug#begin('~/.vim/plugged')
-Plug 'gkapfham/vim-vitamin-onec'
+Plug 'nanotech/jellybeans.vim'
 Plug 'ntpeters/vim-better-whitespace'
 Plug 'editorconfig/editorconfig-vim'
 call plug#end()
 
 syntax on
-colorscheme vitaminonec
+set termguicolors
+let g:jellybeans_overrides = {
+\    'background': { 'ctermbg': 'none', '256ctermbg': 'none' },
+\}
+let g:jellybeans_overrides['background']['guibg'] = 'none'
+colorscheme jellybeans
 
 set mouse=a
 set number
