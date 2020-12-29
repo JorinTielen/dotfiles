@@ -1,6 +1,9 @@
 Full name:     Pastel Tron
 Short name:    pastel_tron
 Author:        jorin <jorintielen@protonmail.com>
+Description:   Inspired by yupferris' pastel-tron emacs color scheme (https://github.com/yupferris/dotfiles/blob/master/emacs/pastel-tron-theme/pastel-tron-theme.el)
+Website:       https://github.com/JorinTielen/dotfiles
+License:       BSD-2
 Neovim:        yes
 
 ; Other conventional group names (see `:help group-name`)
@@ -36,12 +39,15 @@ Background: dark
 ; Color name         GUI         Base256     Base16 (optional)
 Color: background    #0f0f0f       ~         Black
 Color: foreground    #e0e0e0       ~         White
+Color: selection     #696969       ~         DarkGrey
 Color: cursor        #949494       ~         White
 Color: comment       #686868       ~         LightGrey
 Color: purple        #dda0ff       ~         LightMagenta
 Color: beige         #ffebbd       ~         LightYellow
 Color: orange        #e9b96e       ~         DarkYellow
-Color: aqua          #71ddff       ~         LightBlue
+Color: aqua          #71ddff       ~         DarkBlue
+Color: lightblue     #b0e2eb       ~         LightBlue
+Color: yellow        #fce94f       ~         DarkYellow
 Color: red           #ff4450       ~         DarkRed
 Color: green         #d7f0ad       ~         LightGreen
 
@@ -58,16 +64,16 @@ Cursor               cursor            background
 CursorColumn         foreground        background
 CursorLine           foreground        background
 CursorLineNr         foreground        background
-DiffAdd              foreground        background         reverse
-DiffChange           foreground        background         reverse
-DiffDelete           foreground        background         reverse
-DiffText             foreground        background         bold,reverse
+DiffAdd              foreground        background        reverse
+DiffChange           foreground        background        reverse
+DiffDelete           foreground        background        reverse
+DiffText             foreground        background        bold,reverse
 Directory            foreground        background
 EndOfBuffer          foreground        background
-ErrorMsg             foreground        background         reverse
+ErrorMsg             foreground        background        reverse
 FoldColumn           foreground        background
-Folded               foreground        background         italic
-IncSearch            foreground        background         t=reverse g=standout
+Folded               foreground        background        italic
+IncSearch            foreground        background        t=reverse g=standout
 LineNr               foreground        background
 MatchParen           foreground        background
 ModeMsg              foreground        background
@@ -75,16 +81,16 @@ MoreMsg              foreground        background
 NonText              foreground        background
 Pmenu                foreground        background
 PmenuSbar            foreground        background
-PmenuSel             foreground        background         reverse
+PmenuSel             foreground        background        reverse
 PmenuThumb           foreground        background
 Question             foreground        background
 Search               foreground        background
 SignColumn           foreground        background
 SpecialKey           foreground        background
-SpellBad             foreground        background         s=red
-SpellCap             foreground        background         s=aqua
-SpellLocal           foreground        background         s=purple
-SpellRare            foreground        background         s=aqua reverse
+SpellBad             foreground        background        s=red
+SpellCap             foreground        background        s=aqua
+SpellLocal           foreground        background        s=purple
+SpellRare            foreground        background        s=aqua reverse
 StatusLine           foreground        background
 StatusLineNC         foreground        background
 TabLine              foreground        background
@@ -92,7 +98,7 @@ TabLineFill          foreground        background
 TabLineSel           foreground        background
 Title                foreground        background
 VertSplit            foreground        background
-Visual               foreground        background
+Visual               foreground        selection
 VisualNOS            foreground        background
 WarningMsg           foreground        background
 WildMenu             foreground        background
@@ -109,6 +115,7 @@ Statement            purple            none
 Todo                 foreground        none
 Type                 beige             none
 String               green             none
+Number               lightblue         none
 Underlined           foreground        none
 CursorIM             none              fg
 ToolbarLine          none              background
