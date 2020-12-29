@@ -3,6 +3,7 @@ let mapleader = ','
 
 " === Plugins ===
 call plug#begin('~/.vim/plugged')
+Plug 'rust-lang/rust.vim'
 Plug 'lifepillar/vim-colortemplate'
 Plug 'ntpeters/vim-better-whitespace'
 Plug 'editorconfig/editorconfig-vim'
@@ -10,7 +11,8 @@ call plug#end()
 
 syntax on
 set termguicolors
-colorscheme "pastel_tron"
+filetype plugin indent on
+colorscheme pastel_tron
 
 set mouse=a
 set number

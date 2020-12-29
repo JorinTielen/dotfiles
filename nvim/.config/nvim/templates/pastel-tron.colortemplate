@@ -1,6 +1,7 @@
 Full name:     Pastel Tron
 Short name:    pastel_tron
 Author:        jorin <jorintielen@protonmail.com>
+Neovim:        yes
 
 ; Other conventional group names (see `:help group-name`)
 Boolean           -> Constant
@@ -11,7 +12,6 @@ Define            -> PreProc
 Delimiter         -> Special
 Exception         -> Statement
 Float             -> Constant
-Include           -> PreProc
 Keyword           -> Statement
 Label             -> Statement
 Macro             -> PreProc
@@ -26,7 +26,6 @@ SpecialComment    -> Special
 StatusLineTerm    -> StatusLine
 StatusLineTermNC  -> StatusLineNC
 StorageClass      -> Type
-String            -> Constant
 Structure         -> Type
 Tag               -> Special
 Typedef           -> Type
@@ -40,9 +39,11 @@ Color: foreground    #e0e0e0       ~         White
 Color: cursor        #949494       ~         White
 Color: comment       #686868       ~         LightGrey
 Color: purple        #dda0ff       ~         LightMagenta
-Color: beige         #ffedc0       ~         LightYellow
-Color: aqua          #dda0ff       ~         LightBlue
+Color: beige         #ffebbd       ~         LightYellow
+Color: orange        #e9b96e       ~         DarkYellow
+Color: aqua          #71ddff       ~         LightBlue
 Color: red           #ff4450       ~         DarkRed
+Color: green         #d7f0ad       ~         LightGreen
 
 Term colors: foreground foreground foreground foreground foreground foreground foreground foreground
 Term colors: background background background background background background background background
@@ -101,13 +102,19 @@ Error                foreground        background        reverse
 Identifier           beige             none
 Function             aqua              none
 Ignore               foreground        none
-PreProc              foreground        none
-Special              purple            none
-Statement            foreground        none
+PreProc              red               none
+Include              beige             none
+Special              foreground        none
+Statement            purple            none
 Todo                 foreground        none
-Type                 foreground        none
+Type                 beige             none
+String               green             none
 Underlined           foreground        none
 CursorIM             none              fg
 ToolbarLine          none              background
 ToolbarButton        foreground        background        bold
+
+; rust special stuff
+rustDeriveTrait      red               none
+rustSelf             purple            none
 
