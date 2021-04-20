@@ -36,6 +36,7 @@ For complete usage guide, see <https://github.com/Ajatt-Tools/mpvacious/blob/mas
 ]]
 
 local config = {
+    -- Common
     autoclip = false,              -- enable copying subs to the clipboard when mpv starts
     nuke_spaces = true,            -- remove all spaces from exported anki cards
     clipboard_trim_enabled = true, -- remove unnecessary characters from strings before copying to the clipboard
@@ -46,17 +47,22 @@ local config = {
     audio_format = "opus",         -- opus or mp3
     audio_bitrate = "18k",         -- from 16k to 32k
     audio_padding = 0.12,          -- Set a pad to the dialog timings. 0.5 = audio is padded by .5 seconds. 0 = disable.
+    tie_volumes = false,           -- if set to true, the volume of the outputted audio file depends on the volume of the player at the time of export
+    menu_font_size = 25,
+
+    -- Anki
     deck_name = "Learning",        -- the deck will be created if needed
     model_name = "Japanese sentences",  -- Tools -> Manage note types
     sentence_field = "SentKanji",
     audio_field = "SentAudio",
+    image_field = "Image",
+    note_tag = "subs2srs",         -- the tag that is added to new notes. change to "" to disable tagging
+    append_media = true,           -- True to append video media after existing data, false to insert media before
+
+    -- Forvo support
     use_forvo = "yes",                  -- 'yes', 'no', 'always'
     vocab_field = "VocabKanji",         -- target word field
     vocab_audio_field = "VocabAudio",   -- target word audio
-    image_field = "Image",
-    menu_font_size = 25,
-    note_tag = "subs2srs",      -- the tag that is added to new notes. change to "" to disable tagging
-    tie_volumes = false,        -- if set to true, the volume of the outputted audio file depends on the volume of the player at the time of export
 }
 
 local utils = require('mp.utils')
@@ -175,9 +181,10 @@ end
 
 local function remove_text_in_parentheses(str)
     -- Remove text like （泣き声） or （ドアの開く音）
+    -- No deletion is performed if there's no text after the parentheses.
     -- Note: the modifier `-´ matches zero or more occurrences.
     -- However, instead of matching the longest sequence, it matches the shortest one.
-    return str:gsub('%b()', ''):gsub('（.-）', '')
+    return str:gsub('(%b())(.)', '%2'):gsub('(（.-）)(.)', '%2')
 end
 
 local function remove_newlines(str)
@@ -308,23 +315,41 @@ do
         config[dimension] = config[dimension] > 640 and 640 or config[dimension]
     end
 
-    local function check_snapshot_settings()
+    local function conditionally_set_defaults(width, height, quality)
+        if config[width] < 1 and config[height] < 1 then
+            config[width] = -2
+            config[height] = 200
+        end
+        if config[quality] < 0 or config[quality] > 100 then
+            config[quality] = 15
+        end
+    end
+
+    local function check_image_settings()
         ensure_in_range('snapshot_width')
         ensure_in_range('snapshot_height')
-        if config.snapshot_width < 1 and config.snapshot_height < 1 then
-            config.snapshot_width = -2
-            config.snapshot_height = 200
-        end
-        if config.snapshot_quality < 0 or config.snapshot_quality > 100 then
-            config.snapshot_quality = 15
-        end
+        conditionally_set_defaults('snapshot_width', 'snapshot_height', 'snapshot_quality')
     end
 
     validate_config = function()
         set_audio_format()
         set_video_format()
-        check_snapshot_settings()
+        check_image_settings()
     end
+end
+
+local function update_sentence(new_data, stored_data)
+    -- adds support for TSCs
+    -- https://tatsumoto-ren.github.io/blog/discussing-various-card-templates.html#targeted-sentence-cards-or-mpvacious-cards
+    -- if the target word was marked by yomichan, this function makes sure that the highlighting doesn't get erased.
+    local _, target, _ = stored_data[config.sentence_field]:match('^(.-)<b>(.-)</b>(.-)$')
+    if target then
+        local prefix, _, suffix = new_data[config.sentence_field]:match(table.concat { '^(.-)(', target, ')(.-)$' })
+        if prefix and suffix then
+            new_data[config.sentence_field] = table.concat { prefix, '<b>', target, '</b>', suffix }
+        end
+    end
+    return new_data
 end
 
 ------------------------------------------------------------
@@ -534,8 +559,13 @@ local function update_last_note(overwrite)
     local stored_data = ankiconnect.get_note_fields(last_note_id)
     if stored_data then
         new_data = append_forvo_pronunciation(new_data, stored_data)
+        new_data = update_sentence(new_data, stored_data)
         if not overwrite then
-            new_data = join_media_fields(new_data, stored_data)
+            if config.append_media then
+                new_data = join_media_fields(new_data, stored_data)
+            else
+                new_data = join_media_fields(stored_data, new_data)
+            end
         end
     end
 
@@ -611,6 +641,7 @@ local function init_platform_windows()
     end
 
     self.copy_to_clipboard = function(text)
+        text = text:gsub("&", "^^^&")
         mp.commandv("run", "cmd.exe", "/d", "/c", string.format("@echo off & chcp 65001 & echo %s|clip", text))
     end
 
@@ -1059,6 +1090,19 @@ ankiconnect.gui_browse = function(query)
     }
 end
 
+ankiconnect.add_tag = function(note_id, tag)
+    if not is_empty(tag) then
+        ankiconnect.execute {
+            action = 'addTags',
+            version = 6,
+            params = {
+                notes = { note_id },
+                tags = tag
+            }
+        }
+    end
+end
+
 ankiconnect.append_media = function(note_id, fields, create_media_fn)
     -- AnkiConnect will fail to update the note if it's selected in the Anki Browser.
     -- https://github.com/FooSoft/anki-connect/issues/82
@@ -1080,6 +1124,7 @@ ankiconnect.append_media = function(note_id, fields, create_media_fn)
         local _, error = ankiconnect.parse_result(result)
         if not error then
             create_media_fn()
+            ankiconnect.add_tag(note_id, config.note_tag)
             ankiconnect.gui_browse(string.format("nid:%s", note_id)) -- select the updated note in the card browser
             notify(string.format("Note #%s updated.", note_id))
         else
@@ -1102,11 +1147,11 @@ subs = {
 subs.get_current = function()
     local sub_text = mp.get_property("sub-text")
     if not is_empty(sub_text) then
-        local sub_delay = mp.get_property_native("sub-delay")
+        local delay = mp.get_property_native("sub-delay") - mp.get_property_native("audio-delay")
         return Subtitle:new {
             ['text'] = sub_text,
-            ['start'] = mp.get_property_number("sub-start") + sub_delay,
-            ['end'] = mp.get_property_number("sub-end") + sub_delay
+            ['start'] = mp.get_property_number("sub-start") + delay,
+            ['end'] = mp.get_property_number("sub-end") + delay
         }
     end
     return nil
@@ -1196,32 +1241,48 @@ end
 ------------------------------------------------------------
 -- send subs to clipboard as they appear
 
-clip_autocopy = {}
-
-clip_autocopy.enable = function()
-    mp.observe_property("sub-text", "string", copy_to_clipboard)
-    notify("Clipboard autocopy has been enabled.", "info", 1)
-end
-
-clip_autocopy.disable = function()
-    mp.unobserve_property(copy_to_clipboard)
-    notify("Clipboard autocopy has been disabled.", "info", 1)
-end
-
-clip_autocopy.toggle = function()
-    if config.autoclip == true then
-        clip_autocopy.disable()
-        config.autoclip = false
-    else
-        clip_autocopy.enable()
-        config.autoclip = true
+clip_autocopy = (function()
+    local enable = function()
+        mp.observe_property("sub-text", "string", copy_to_clipboard)
     end
-    menu.update()
-end
 
-clip_autocopy.is_enabled = function()
-    return config.autoclip == true and 'enabled' or 'disabled'
-end
+    local disable = function()
+        mp.unobserve_property(copy_to_clipboard)
+    end
+
+    local state_notify = function()
+        notify(string.format("Clipboard autocopy has been %s.", config.autoclip and 'enabled' or 'disabled'))
+    end
+
+    local toggle = function()
+        config.autoclip = not config.autoclip
+        if config.autoclip == true then
+            enable()
+        else
+            disable()
+        end
+        state_notify()
+        menu.update()
+    end
+
+    local is_enabled = function()
+        return config.autoclip == true and 'enabled' or 'disabled'
+    end
+
+    local init = function()
+        if config.autoclip == true then
+            enable()
+        end
+    end
+
+    return {
+        enable = enable,
+        disable = disable,
+        init = init,
+        toggle = toggle,
+        is_enabled = is_enabled,
+    }
+end)()
 
 ------------------------------------------------------------
 -- Subtitle class provides methods for comparing subtitle lines
@@ -1424,7 +1485,7 @@ do
         if main_executed then return end
         validate_config()
         ankiconnect.create_deck(config.deck_name)
-        if config.autoclip == true then clip_autocopy.enable() end
+        clip_autocopy.init()
 
         -- Key bindings
         mp.add_forced_key_binding("ctrl+e", "mpvacious-export-note", export_to_anki)
